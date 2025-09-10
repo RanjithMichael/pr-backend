@@ -1,25 +1,25 @@
 import nodemailer from "nodemailer";
 
-const sendEmail = async (to, subject, text) => {
+const sendEmail = async ({ email, subject, message }) => {
   try {
-    // transporter setup
     const transporter = nodemailer.createTransport({
-      service: "gmail", 
+      service: "gmail",
       auth: {
-        user: process.env.EMAIL_USER, // email
-        pass: process.env.EMAIL_PASS, // app password
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
       },
     });
 
-    // email options
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to,
+      to: email,
       subject,
-      text,
+      html: `
+        <p>${message}</p>
+        <p>If you did not request this, please ignore this email.</p>
+      `,
     };
 
-    // send email
     await transporter.sendMail(mailOptions);
     console.log("✅ Email sent successfully");
   } catch (error) {
