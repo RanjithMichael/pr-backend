@@ -36,7 +36,7 @@ export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    //Validate input
+    // Validate input
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password are required" });
     }
@@ -71,9 +71,10 @@ export const forgotPassword = async (req, res) => {
     const resetToken = user.getResetPasswordToken();
     await user.save({ validateBeforeSave: false });
 
+    // ✅ Use frontend URL from environment
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
 
-    const message = `You requested a password reset. Please make a PUT request to: \n\n ${resetUrl}`;
+    const message = `You requested a password reset. Please click the link below or make a PUT request to:\n\n ${resetUrl}`;
 
     try {
       await sendEmail({
