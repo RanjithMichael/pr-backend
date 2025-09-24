@@ -9,18 +9,20 @@ connectDB();
 
 const app = express();
 
-// ✅ Allowed origins for dev + prod
-const allowedOrigins = [
-  "http://localhost:5173", // Vite dev server
-  "https://passwordresetflo.netlify.app/" 
-];
+// ✅ Dynamic allowed origins using environment variable
+// ALLOWED_ORIGINS=http://localhost:5173,https://passwordresetflo.netlify.app
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",")
+  : ["http://localhost:5173"]; // fallback for local dev
 
 // ✅ CORS middleware
 app.use(cors({
   origin: function(origin, callback) {
-    // allow requests with no origin (like mobile apps or Postman)
+    console.log("Request Origin:", origin); // debug log
+
+    // allow requests with no origin (like Postman or mobile apps)
     if (!origin) return callback(null, true);
-    
+
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -30,7 +32,13 @@ app.use(cors({
   credentials: true, // allow cookies or auth headers
 }));
 
-// Parse JSON body
+// ✅ Handle preflight OPTIONS requests for all routes
+app.options("*", cors({
+  origin: allowedOrigins,
+  credentials: true
+}));
+
+// Parse JSON
 app.use(express.json());
 
 // Test route

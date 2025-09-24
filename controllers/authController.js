@@ -8,15 +8,13 @@ const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "1h" });
 };
 
-// @desc Register user
+// REGISTER
 export const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
     const userExists = await User.findOne({ email });
-    if (userExists) {
-      return res.status(400).json({ message: "User already exists" });
-    }
+    if (userExists) return res.status(400).json({ message: "User already exists" });
 
     const user = await User.create({ name, email, password });
 
@@ -27,37 +25,23 @@ export const registerUser = async (req, res) => {
       token: generateToken(user._id),
     });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: error.message });
   }
 };
 
-// @desc Login user
+// LOGIN
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validate input
-    if (!email || !password) {
-      return res.status(400).json({ message: "Email and password are required" });
-    }
+    if (!email || !password) return res.status(400).json({ message: "Email and password are required" });
 
     const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.status(401).json({ message: "Invalid email or password" });
-    }
-
-    // Ensure user has a password stored
-    if (!user.password) {
-      return res
-        .status(500)
-        .json({ message: "User has no password set. Please register again." });
-    }
+    if (!user) return res.status(401).json({ message: "Invalid email or password" });
 
     const isMatch = await user.matchPassword(password);
-    if (!isMatch) {
-      return res.status(401).json({ message: "Invalid email or password" });
-    }
+    if (!isMatch) return res.status(401).json({ message: "Invalid email or password" });
 
     res.json({
       _id: user._id,
@@ -66,35 +50,26 @@ export const loginUser = async (req, res) => {
       token: generateToken(user._id),
     });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: error.message });
   }
 };
 
-// @desc Forgot password
+// FORGOT PASSWORD
 export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
     const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.status(404).json({ message: "No user found with that email" });
-    }
+    if (!user) return res.status(404).json({ message: "No user found with that email" });
 
     const resetToken = user.getResetPasswordToken();
     await user.save({ validateBeforeSave: false });
 
-    // ✅ Use frontend URL from environment
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
-
-    const message = `You requested a password reset. Please click the link below or make a PUT request to:\n\n ${resetUrl}`;
+    const message = `You requested a password reset. Click the link: ${resetUrl}`;
 
     try {
-      await sendEmail({
-        email: user.email,
-        subject: "Password Reset Request",
-        message,
-      });
-
+      await sendEmail({ email: user.email, subject: "Password Reset", message });
       res.status(200).json({ message: "Email sent successfully" });
     } catch (err) {
       user.resetPasswordToken = undefined;
@@ -103,11 +78,12 @@ export const forgotPassword = async (req, res) => {
       res.status(500).json({ message: "Email could not be sent" });
     }
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: error.message });
   }
 };
 
-// @desc Reset password
+// RESET PASSWORD
 export const resetPassword = async (req, res) => {
   try {
     const resetPasswordToken = crypto
@@ -120,9 +96,7 @@ export const resetPassword = async (req, res) => {
       resetPasswordExpire: { $gt: Date.now() },
     });
 
-    if (!user) {
-      return res.status(400).json({ message: "Invalid or expired token" });
-    }
+    if (!user) return res.status(400).json({ message: "Invalid or expired token" });
 
     user.password = req.body.password;
     user.resetPasswordToken = undefined;
@@ -132,6 +106,7 @@ export const resetPassword = async (req, res) => {
 
     res.status(200).json({ message: "Password reset successful" });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: error.message });
   }
 };
