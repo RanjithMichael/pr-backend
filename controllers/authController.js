@@ -2,14 +2,14 @@ import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 import sendEmail from "../utils/sendEmail.js";
 import crypto from "crypto";
-
+import asyncHandler from "express-async-handler";
 // Generate JWT
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "1h" });
 };
 
 // REGISTER
-export const registerUser = async (req, res) => {
+export const registerUser = asyncHandler(async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
@@ -28,10 +28,10 @@ export const registerUser = async (req, res) => {
     console.error(error);
     res.status(500).json({ message: error.message });
   }
-};
+});
 
 // LOGIN
-export const loginUser = async (req, res) => {
+export const loginUser = asyncHandler(async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -53,10 +53,10 @@ export const loginUser = async (req, res) => {
     console.error(error);
     res.status(500).json({ message: error.message });
   }
-};
+});
 
 // FORGOT PASSWORD
-export const forgotPassword = async (req, res) => {
+export const forgotPassword = asyncHandler(async (req, res) => {
   try {
     const { email } = req.body;
     const user = await User.findOne({ email });
@@ -81,10 +81,10 @@ export const forgotPassword = async (req, res) => {
     console.error(error);
     res.status(500).json({ message: error.message });
   }
-};
+});
 
 // RESET PASSWORD
-export const resetPassword = async (req, res) => {
+export const resetPassword = asyncHandler(async (req, res) => {
   try {
     const resetPasswordToken = crypto
       .createHash("sha256")
@@ -109,4 +109,4 @@ export const resetPassword = async (req, res) => {
     console.error(error);
     res.status(500).json({ message: error.message });
   }
-};
+});

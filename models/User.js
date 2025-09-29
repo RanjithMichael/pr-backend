@@ -4,43 +4,29 @@ import crypto from "crypto";
 
 const userSchema = new mongoose.Schema(
   {
-    name: {
-      type: String,
-      required: [true, "Please enter your name"],
-    },
-    email: {
-      type: String,
-      required: [true, "Please enter your email"],
-      unique: true,
-      lowercase: true,
-    },
-    password: {
-      type: String,
-      required: [true, "Please enter a password"],
-      minlength: 6,
-    },
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
   },
   { timestamps: true }
 );
 
-// Hash password before saving
+// 🔹 Hash password before saving
 userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) {
-    return next();
-  }
+  if (!this.isModified("password")) return next();
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
   next();
 });
 
-// Compare entered password with hashed one
+// 🔹 Compare password during login
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// Generate reset token
+// 🔹 Generate reset token
 userSchema.methods.getResetPasswordToken = function () {
   const resetToken = crypto.randomBytes(20).toString("hex");
 
@@ -49,9 +35,12 @@ userSchema.methods.getResetPasswordToken = function () {
     .update(resetToken)
     .digest("hex");
 
-  this.resetPasswordExpire = Date.now() + 10 * 60 * 1000; 
+  this.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 min
+
   return resetToken;
 };
 
 const User = mongoose.model("User", userSchema);
 export default User;
+
+    
